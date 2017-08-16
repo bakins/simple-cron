@@ -51,6 +51,24 @@ var (
 		[]string{"status", "name"},
 	)
 
+	rusage = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: metricNamespace,
+			Name:      "system_usage",
+			Help:      "system statstics",
+		},
+		[]string{"status", "name", "type"},
+	)
+
+	lastRun = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: metricNamespace,
+			Name:      "last_timestamp",
+			Help:      "job run time",
+		},
+		[]string{"status", "name"},
+	)
+
 // TODO:  add histogram as well?
 // TODO: add last runtime?
 // TODO: add https://golang.org/pkg/syscall/#Rusage from process state?
@@ -60,6 +78,8 @@ var (
 func main() {
 	prometheus.MustRegister(runCount)
 	prometheus.MustRegister(runTime)
+	prometheus.MustRegister(rusage)
+	prometheus.MustRegister(lastRun)
 	prometheus.Unregister(prometheus.NewProcessCollector(os.Getpid(), ""))
 	prometheus.Unregister(prometheus.NewGoCollector())
 
@@ -187,27 +207,27 @@ func (w *wrappedCommand) getCmd() (cmd *exec.Cmd) {
 }
 
 // wrapper so that the locked region is smaller/easier
-func (w *wrappedCommand) runCommand(cmd *exec.Cmd) error {
+func (w *wrappedCommand) runCommand(cmd *exec.Cmd) (*os.ProcessState, error) {
 	w.setRunning(true)
 	defer w.setRunning(false)
 
 	if err := cmd.Start(); err != nil {
-		return errors.Wrap(err, "failed to start process")
+		return nil, errors.Wrap(err, "failed to start process")
 	}
 
 	w.setCmd(cmd)
 	defer w.setCmd(nil)
 
 	if err := cmd.Wait(); err != nil {
-		return errors.Wrap(err, "failed to run process")
+		return cmd.ProcessState, errors.Wrap(err, "failed to run process")
 	}
 
-	return nil
+	return cmd.ProcessState, nil
 }
 
 func (w *wrappedCommand) run() {
 	if w.getRunning() {
-		logger.Info("already running", zap.String("jobname", w.name))
+		w.logger.Info("already running")
 		// TODO: metric for concurrent attempts
 	}
 
@@ -222,16 +242,54 @@ func (w *wrappedCommand) run() {
 
 	status := "success"
 	start := time.Now()
-	err := w.runCommand(cmd)
-	diff := time.Since(start)
+	state, err := w.runCommand(cmd)
+	after := time.Now()
+	diff := after.Sub(start)
+
 	if err != nil {
 		status = "error"
-		logger.Warn("job failed", zap.Error(err))
+		w.logger.Error("job failed", zap.Error(err))
 	}
 
 	labels := prometheus.Labels{"status": status, "name": w.name}
 	runCount.With(labels).Inc()
 	runTime.With(labels).Set(diff.Seconds())
+	lastRun.With(labels).Set(float64(after.Unix()))
+
+	if state != nil {
+		u := state.SysUsage()
+		r, ok := u.(*syscall.Rusage)
+		if !ok {
+			w.logger.Warn("unable to get system stats")
+
+		} else {
+
+			for k, v := range map[string]syscall.Timeval{"utime": r.Utime, "stime": r.Stime} {
+				rusage.With(prometheus.Labels{"status": status, "name": w.name, "type": k}).Set(float64(v.Nano()) / 1000000000.0)
+			}
+
+			usage := map[string]int64{
+				"maxrss":   r.Maxrss,
+				"ixrss":    r.Ixrss,
+				"idrss":    r.Idrss,
+				"isrss":    r.Isrss,
+				"minflt":   r.Minflt,
+				"majflt":   r.Majflt,
+				"nswap":    r.Nswap,
+				"inblock":  r.Inblock,
+				"oublock":  r.Oublock,
+				"msgsnd":   r.Msgsnd,
+				"msgrcv":   r.Msgrcv,
+				"nsignals": r.Nsignals,
+				"nvcsw":    r.Nvcsw,
+				"mivcsw":   r.Nivcsw,
+			}
+
+			for k, v := range usage {
+				rusage.With(prometheus.Labels{"status": status, "name": w.name, "type": k}).Set(float64(v))
+			}
+		}
+	}
 }
 
 func (w *wrappedCommand) stop() {

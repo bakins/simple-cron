@@ -31,7 +31,6 @@ one instance of the job.
 ## TODO
 
 - flag to allow concurrent running jobs?
-- simple process stats to Prometheus
 - expose statsd server for processes?
 
 ## License
