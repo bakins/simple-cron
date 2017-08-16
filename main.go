@@ -21,6 +21,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: we could expose a statsd server - like statsd exporter
+// for processes to push metrics to?
+
 // todoay, allow override?
 const metricNamespace = "cron"
 
@@ -50,6 +53,8 @@ var (
 
 // TODO:  add histogram as well?
 // TODO: add last runtime?
+// TODO: add https://golang.org/pkg/syscall/#Rusage from process state?
+// should only be exposed when was a success?
 )
 
 func main() {
