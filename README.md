@@ -40,6 +40,13 @@ These are in the form of `CRON_` and the uppercase name of the flag.  For exampl
 setting the environment variable `CRON_SCHEDULE="* * * * *"` is the same
 as passing a flag like `--schedule="* * * * *"`
 
+
+To run a command that takes command line flags, use `--` to seperate flags to `simple-cron` from you program:
+
+```shell
+$ simple-cron -s "* * * * *" --name=bar -- ls -al
+```
+
 ## TODO
 
 - flag to allow concurrent running jobs?
