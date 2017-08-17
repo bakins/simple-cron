@@ -29,6 +29,9 @@ import (
 const metricNamespace = "cron"
 
 var (
+	version     string
+	showVersion bool
+
 	logger *zap.Logger
 
 	runCount = prometheus.NewCounterVec(
@@ -89,6 +92,7 @@ func main() {
 	f.StringP("name", "n", "", "name of job for metrics. If unset, the command is used")
 	f.StringP("schedule", "s", "15 * * * *", "cron expression of desired schedule.")
 	f.StringP("address", "a", ":2766", "address for HTTP listener for metrics")
+	f.BoolVar(&showVersion, "version", false, "print version and exit")
 
 	viper.SetEnvPrefix("cron")
 	viper.AutomaticEnv()
@@ -119,6 +123,11 @@ func parseSchedule(s string) (string, error) {
 }
 
 func runSimpleCron(cmd *cobra.Command, args []string) {
+	if showVersion {
+		fmt.Println("simple-cron", version)
+		os.Exit(0)
+	}
+
 	if len(args) == 0 {
 		logger.Fatal("command is required")
 	}

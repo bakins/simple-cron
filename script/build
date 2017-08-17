@@ -3,6 +3,12 @@ set -e
 NAME=simple-cron
 ARCH=amd64
 
+VERSION=`git rev-parse --short HEAD`
+if [ -n "$TRAVIS_TAG" ]; then
+    VERSION="$TRAVIS_TAG"
+fi
+
 for OS in darwin linux; do
-    CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} go build -o ${NAME}.${OS}.${ARCH} .
+    CGO_ENABLED=0 GOOS=${OS} GOARCH=${ARCH} \
+        go build -o ${NAME}.${OS}.${ARCH} -ldflags "-X main.version=${VERSION}" .
 done
