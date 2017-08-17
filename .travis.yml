@@ -1,0 +1,18 @@
+language: go
+go:
+- 1.8.x
+notifications:
+  email: false
+install:
+- true
+script:
+- "./script/build"
+deploy:
+  provider: releases
+  skip_cleanup: true
+  file:
+    - simple-cron.linux.amd64
+    - simple-cron.darwin.amd64
+  on:
+    repo: bakins/simple-cron
+    tags: true
