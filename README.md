@@ -28,6 +28,11 @@ $ simple-cron -s "* * * * *" sleep 70
 Will run `sleep 70` once a minute. Note: simple-cron will not start more than
 one instance of the job.
 
+`simple-cron` can also use environment variables for configuration.
+These are in the form of `CRON_` and the uppercase name of the flag.  For example,
+setting the environment variable `CRON_SCHEDULE="* * * * *"` is the same
+as passing a flag like `--schedule="* * * * *"`
+
 ## TODO
 
 - flag to allow concurrent running jobs?

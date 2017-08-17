@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
@@ -28,10 +29,7 @@ import (
 const metricNamespace = "cron"
 
 var (
-	schedule string
-	address  string
-	jobName  string
-	logger   *zap.Logger
+	logger *zap.Logger
 
 	runCount = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -70,8 +68,6 @@ var (
 	)
 
 // TODO:  add histogram as well?
-// TODO: add last runtime?
-// TODO: add https://golang.org/pkg/syscall/#Rusage from process state?
 // should only be exposed when was a success?
 )
 
@@ -90,9 +86,13 @@ func main() {
 	}
 
 	f := rootCmd.Flags()
-	f.StringVarP(&schedule, "schedule", "s", "15 * * * *", "cron expression of desired schedule.")
-	f.StringVarP(&address, "address", "a", ":2766", "address for HTTP listener for metrics")
-	f.StringVarP(&jobName, "name", "n", "", "name of job for metrics. If unset, the command is used")
+	f.StringP("name", "n", "", "name of job for metrics. If unset, the command is used")
+	f.StringP("schedule", "s", "15 * * * *", "cron expression of desired schedule.")
+	f.StringP("address", "a", ":2766", "address for HTTP listener for metrics")
+
+	viper.SetEnvPrefix("cron")
+	viper.AutomaticEnv()
+	viper.BindPFlags(f)
 
 	var err error
 	logger, err = newLogger()
@@ -123,7 +123,7 @@ func runSimpleCron(cmd *cobra.Command, args []string) {
 		logger.Fatal("command is required")
 	}
 
-	cronExp, err := parseSchedule(schedule)
+	cronExp, err := parseSchedule(viper.GetString("schedule"))
 	if err != nil {
 		logger.Fatal("failed to parse schedule", zap.Error(err))
 	}
@@ -138,7 +138,7 @@ func runSimpleCron(cmd *cobra.Command, args []string) {
 	}
 
 	srv := http.Server{
-		Addr: address,
+		Addr: viper.GetString("address"),
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
@@ -328,6 +328,7 @@ func newWrappedCommand(cmd []string) (*wrappedCommand, error) {
 		return nil, errors.Wrapf(err, "unable to determine absolute path of '%s'", proc)
 	}
 
+	jobName := viper.GetString("name")
 	if jobName == "" {
 		jobName = proc
 	}
