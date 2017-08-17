@@ -3,6 +3,13 @@
 `simple-cron` is a simple job scheduler that launches a single procees
 on a cron-like schedule.
 
+## Installation
+
+Binary releases are availible for [download](https://github.com/bakins/simple-cron/releases)
+
+`simple-cron` is also go gettable. `go get -u github.com/bakins/simple-cron`
+will install the version in master.
+
 ## Usage
 
 ```shell

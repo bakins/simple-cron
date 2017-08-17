@@ -29,7 +29,7 @@ import (
 const metricNamespace = "cron"
 
 var (
-	version     string
+	version     = "unversioned"
 	showVersion bool
 
 	logger *zap.Logger
