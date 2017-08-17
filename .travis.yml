@@ -9,6 +9,8 @@ script:
 - "./script/build"
 deploy:
   provider: releases
+  api_key:
+    secure: E2B5OR4/EmiwUVWZDhsTnKXyPW+tiXef6Sg/yT6Uf+ftVTf/6jMkqb4qF2AojoAgUQQcZ2h5u8yAinYXksnl6jLaXM+F6qn2mu3zHKmA4K+qhuIUQKFdnCZWbC8k+JptROhS0gwQMoFA4dkOyodHOfV4NDAidHm2uNhB02ZeHaKwYpItHtiSzdSiaylbkOpaO9vjKzi7nlB7uvvgYiRA84XILCUTlzcPaa8S+/2/TxEy3DHpNz0+Qz4tz/7SafGI3iwjECOGUJaeB1MfJZjOAxnC7oaA6KtxxLfFPcYe+5lJ/1PXEAA2kempeDoPUHQvZL2hdHso+fZvjEXHnKHe9352LXZmP4Phhc0M91zNysZxM1mfW5QoUOwpUqhs6WLfEpc5a3RZj0onzzrOyoJikloAQs2hsNVN3zExPKsn1QxO8GVfK7jOEg6Ac006EIcaV2de4xFn6/oD0FR3BSrHI4fyGAa/iT8uY1PqXxcjhjzx5F7+qMVnkQyn8e7n+Hb7qahRP+qevizEEyIkNUsAEKjxIEZT5BehSg/AimqvPCcjenFtn+lYKdOr6/2tflI8ZwzJTRhRHayoi+tRM0l/nSzcL37Q2ZELHqgrBhLjgxogJauJGYGNy65VEhLDruy+VInw3QTOGl8c3LkvBdgpInxTZz2wHQrQOprLE1rmHPk=
   skip_cleanup: true
   file:
     - simple-cron.linux.amd64
